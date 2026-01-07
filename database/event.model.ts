@@ -117,7 +117,7 @@ eventSchema.index({ slug: 1 }, { unique: true });
  * 2. Normalize date to ISO format
  * 3. Ensure time is in consistent format
  */
-eventSchema.pre('save', function (next) {
+eventSchema.pre('save', async function () {
   // Generate slug only if title is new or modified
   if (this.isModified('title')) {
     this.slug = this.title
@@ -134,12 +134,12 @@ eventSchema.pre('save', function (next) {
     try {
       const parsedDate = new Date(this.date);
       if (isNaN(parsedDate.getTime())) {
-        return next(new Error('Invalid date format'));
+        throw new Error('Invalid date format');
       }
       // Store as ISO string for consistency
       this.date = parsedDate.toISOString().split('T')[0];
     } catch (error) {
-      return next(new Error('Date validation failed'));
+      throw new Error('Date validation failed');
     }
   }
 
@@ -147,13 +147,11 @@ eventSchema.pre('save', function (next) {
   if (this.isModified('time')) {
     const timeRegex = /^(0?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM|am|pm)$/;
     if (!timeRegex.test(this.time.trim())) {
-      return next(new Error('Time must be in format HH:MM AM/PM'));
+      throw new Error('Time must be in format HH:MM AM/PM');
     }
     // Normalize to uppercase AM/PM
     this.time = this.time.trim().replace(/(am|pm)$/i, (match) => match.toUpperCase());
   }
-
-  next();
 });
 
 // Create and export the Event model

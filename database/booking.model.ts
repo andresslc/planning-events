@@ -46,21 +46,15 @@ bookingSchema.index({ eventId: 1, email: 1 });
  * Pre-save hook to validate that the referenced event exists
  * Prevents orphaned bookings by checking event existence before saving
  */
-bookingSchema.pre('save', async function (next) {
+bookingSchema.pre('save', async function () {
   // Only validate eventId if it's new or modified
   if (this.isModified('eventId')) {
-    try {
-      const eventExists = await Event.findById(this.eventId);
-      
-      if (!eventExists) {
-        return next(new Error(`Event with ID ${this.eventId} does not exist`));
-      }
-    } catch (error) {
-      return next(new Error('Failed to validate event reference'));
+    const eventExists = await Event.findById(this.eventId);
+    
+    if (!eventExists) {
+      throw new Error(`Event with ID ${this.eventId} does not exist`);
     }
   }
-
-  next();
 });
 
 // Create and export the Booking model
